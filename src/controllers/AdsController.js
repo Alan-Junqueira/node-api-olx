@@ -233,5 +233,71 @@ module.exports = {
       return res.json({ error: 'Produto não encontrado' });
     }
   },
-  editAction: async (req, res) => {}
+  editAction: async (req, res) => {
+    let { id } = req.params;
+    let {
+      title,
+      status,
+      price,
+      priceNegotiable,
+      description,
+      category,
+      images,
+      token
+    } = req.body;
+
+    if (id.length < 12) {
+      return res.json({ error: 'ID inválido' });
+    }
+
+    const ad = await Ad.findById(id).exec();
+    if (!ad) {
+      return res.json({ error: 'Anúncio inexistente' });
+    }
+
+    const user = await User.findOne({ token }).exec();
+    if (user._id.toString() !== ad.idUser) {
+      return res.json({ error: 'Este anúmcio não é seu' });
+    }
+
+    let updates = {};
+
+    if (title) {
+      updates.title = title;
+    }
+
+    if (price) {
+      price = price.replace('.', '').replace(',', '.').replace('R$ ', '');
+      price = parseFloat(price);
+      updates.price = price;
+    }
+
+    if (priceNegotiable) {
+      updates.priceNegotiable = priceNegotiable;
+    }
+
+    if (status) {
+      updates.status = status;
+    }
+
+    if (description) {
+      updates.description = description;
+    }
+
+    if (category) {
+      const categoryCheck = await Category.findOne({ slug: category }).exec();
+      if (!categoryCheck) {
+        return res.json({ error: 'Categoria inexistente' });
+      }
+      updates.category = categoryCheck._id.toString();
+    }
+
+    if (images) {
+      updates.images = images;
+    }
+
+    await Ad.findByIdAndUpdate(id, { $set: updates });
+
+    return res.json({ error: '' });
+  }
 };
