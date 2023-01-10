@@ -47,7 +47,7 @@ module.exports = {
 
     const newAd = new Ad();
     newAd.status = true;
-    newAd.User = user._id;
+    newAd.idUser = user._id;
     newAd.state = user.state;
     newAd.dateCreated = new Date();
     newAd.title = title;
@@ -152,6 +152,86 @@ module.exports = {
 
     return res.json({ ads, total });
   },
-  getIten: async (req, res) => {},
+  getIten: async (req, res) => {
+    let { id, other = null } = req.query;
+
+    if (!id) {
+      return res.json({ error: 'Sem produto' });
+    }
+
+    if (id.length < 12) {
+      return res.json({ error: 'ID inválido' });
+    }
+
+    try {
+      const ad = await Ad.findById(id);
+
+      if (!ad) {
+        return res.json({ error: 'Produto inexistente' });
+      }
+
+      ad.views++;
+      await ad.save();
+
+      let images = [];
+      for (let i in ad.images) {
+        images.push(
+          `${process.env.BASE}:${process.env.PORT}/media/${ad.images[i].url}`
+        );
+      }
+
+      let category = await Category.findById(ad.category).exec();
+      let user = await User.findById(ad.idUser).exec();
+      let state = await State.findById(ad.state).exec();
+
+      let others = [];
+      if (others) {
+        const otherData = await Ad.find({
+          status: true,
+          idUser: ad.idUser
+        }).exec();
+
+        for (let i in otherData) {
+          if (otherData[i]._id.toString() !== ad._id.toString()) {
+            let image = `${process.env.BASE}:${process.env.PORT}/media/default.jpg}`;
+
+            let defaultImage = otherData[i].images.find((e) => e.default);
+
+            if (defaultImage) {
+              image = `${process.env.BASE}:${process.env.PORT}/media/${defaultImage.url}`;
+            }
+
+            others.push({
+              id: otherData[i]._id,
+              title: otherData[i].title,
+              price: otherData[i].price,
+              priceNegotiable: otherData[i].priceNegotiable,
+              image
+            });
+          }
+        }
+      }
+
+      return res.json({
+        id: ad._id,
+        title: ad.title,
+        price: ad.price,
+        priceNegotiable: ad.priceNegotiable,
+        description: ad.description,
+        dateCreated: ad.dateCreated,
+        views: ad.views,
+        images,
+        category,
+        userInfo: {
+          name: user.name,
+          email: user.email
+        },
+        stateName: state.name,
+        others
+      });
+    } catch (error) {
+      return res.json({ error: 'Produto não encontrado' });
+    }
+  },
   editAction: async (req, res) => {}
 };
