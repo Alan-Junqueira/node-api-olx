@@ -6,13 +6,13 @@ module.exports = {
       return res.json({ notAllowed: true });
     }
 
-    let token = req.query.token ? req.query.token : req.body.token;
+    let { token } = req.query.token ? req.query : req.body;;
 
     if (token === '') {
       return res.json({ notAllowed: true });
     }
 
-    const user = await User.findONe({ token });
+    const user = await User.findOne({ token });
 
     if (!user) {
       return res.json({ notAllowed: true });
