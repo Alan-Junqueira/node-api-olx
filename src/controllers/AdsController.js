@@ -91,9 +91,40 @@ module.exports = {
     newAd.images.length > 0 ?? (newAd.images[0].default = true);
 
     const info = await newAd.save();
-    res.json({ id: info._id });
+    return res.json({ id: info._id });
   },
-  getList: async (req, res) => {},
+  getList: async (req, res) => {
+    let {
+      sort = 'asc',
+      offset = 0,
+      limit = 8,
+      query,
+      category,
+      state
+    } = req.query;
+
+    const adsData = await Ad.find({ status: true }).exec();
+    let ads = [];
+    for (let i in adsData) {
+      let image;
+
+      let defaultImage = adsData[i].images.find((e) => e.default);
+      if (defaultImage) {
+        image = `${process.env.BASE}:${process.env.PORT}/media/${defaultImage.url}`;
+      } else {
+        image = `${process.env.BASE}:${process.env.PORT}/media/default.jpg`;
+      }
+      ads.push({
+        id: adsData[i]._id,
+        title: adsData[i].title,
+        price: adsData[i].price,
+        priceNegotiable: adsData[i].priceNegotiable,
+        image
+      });
+    }
+
+    return res.json({ ads });
+  },
   getIten: async (req, res) => {},
   editAction: async (req, res) => {}
 };
