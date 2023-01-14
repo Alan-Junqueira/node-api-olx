@@ -38,6 +38,15 @@ module.exports = {
       return res.json({ error: 'Título e/ou categoria não foram preenchidos' });
     }
 
+    if (category.length < 12) {
+      return res.json({ error: 'Id de categoria inválido' });
+    }
+
+    const categoryMatch = await Category.findById(category);
+    if (!categoryMatch) {
+      return res.json({ error: 'Categoria inexistente' });
+    }
+
     if (price) {
       price = price.replace('.', '').replace(',', '.').replace('R$ ', '');
       price = parseFloat(price);
@@ -297,6 +306,41 @@ module.exports = {
     }
 
     await Ad.findByIdAndUpdate(id, { $set: updates });
+
+    if (req.files && req.files.img) {
+      const adImage = await Ad.findById(id);
+
+      if (req.files.img.length == undefined) {
+        if (
+          ['image/jpeg', 'image/jpg', 'image/png'].includes(
+            req.files.img.mimetype
+          )
+        ) {
+          let url = await addImage(req.files.img.data);
+          adImage.images.push({
+            url,
+            default: false
+          });
+        }
+      } else {
+        for (let i = 0; i < req.files.img.length; i++) {
+          if (
+            ['image/jpeg', 'image/jpg', 'image/png'].includes(
+              req.files.img[i].mimetype
+            )
+          ) {
+            let url = await addImage(req.files.img[i].data);
+            adImage.images.push({
+              url,
+              default: false
+            });
+          }
+        }
+      }
+
+      adImage.images = [...adImage.images];
+      await adImage.save();
+    }
 
     return res.json({ error: '' });
   }
