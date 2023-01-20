@@ -23,7 +23,7 @@ module.exports = {
     for (let i in cats) {
       categories.push({
         ...cats[i]._doc,
-        img: `${process.env.BASE}:${process.env.PORT}/assets/images/${cats[i].slug}.png`
+        img: `${process.env.BASE}/assets/images/${cats[i].slug}.png`
       });
     }
 

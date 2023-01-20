@@ -6,6 +6,8 @@ const fileupload = require('express-fileupload');
 
 const apiRoutes = require('./src/routes');
 
+//? DB connection
+
 mongoose.connect(process.env.DATABASE, {
   useNewUrlParser: true,
   // useFindAndModify: false,
